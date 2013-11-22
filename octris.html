@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Why octris doesn't work</title>
+		<script src="generator.js"></script>
+		<script src="scores.js"></script>
+		<link rel="stylesheet" type="text/css" href="style.css"/>
+		<script>
+			//options
+			var blockshadow;
+			var autoscale = true;
+			var widemode = true;
+
+			//global variables
+			var timer;  //Game timer
+			var droptimer;
+
+			var tileCountVertical = 40;
+			var tileCountHorizontal = 20;
+			var tileWidth;
+			var tileHeight;
+
+			//the current block and its properties
+			var currentOctinomal;
+			var octinomalX;
+			var octinomalY;
+			var octinomalRotation;
+			var octinomalColor;
+			var dropOctinomal;
+
+			//grids
+			var fgGrid;	//where everything goes to die
+
+			//other stuff
+			var looser = false;
+
+			function initialize() {
+    			canvas = document.getElementById("gameCanvas");
+				ctx = canvas.getContext("2d");
+				//canvas.width = document.body.clientWidth
+				//canvas.height = document.body.clientHeight;
+
+				tileWidth = canvas.width / tileCountHorizontal;
+				tileHeight = canvas.height / tileCountVertical;
+
+				//fg stuff
+				fgGrid = new Array(tileCountHorizontal);
+				for(x = 0; x < tileCountHorizontal; x++){
+						fgGrid[x] = new Array(tileCountVertical);
+						for(y = 0; y < tileCountVertical; y++){
+						fgGrid[x][y] = 0;
+					}
+				}
+
+				//create initial octinomal
+				currentOctinomal = generateBlock();
+				octinomalX = Math.floor(currentOctinomal.length / 2);
+				octinomalY = -currentOctinomal[0].length;
+				octinomalColor = Math.floor((Math.random()*360)+0)
+				dropOctinomal = false;
+
+				//start game udpate timer
+				clearInterval(timer);
+    			timer = setInterval(function(){update()}, 500);
+
+    			update();
+
+    			updatescore();
+    			updatesize();
+
+    			window.onresize = function(event) {updatesize();}
+			}
+
+			function toggleshadows(){
+				if(blockshadow == true){
+					blockshadow = false;
+				}else{
+					blockshadow = true;
+				}
+
+				redraw();
+			}
+
+			function togglescale () {
+				if(autoscale == true){
+					autoscale = false;
+					canvas.height = 600;
+					canvas.width = 300;
+				}else{
+					autoscale = true;
+				}
+				updatesize();
+			}
+
+			function togglewide(){
+				if(widemode == true){
+					widemode = false;
+					tileCountHorizontal = 10;
+					tileCountVertical = 20;
+				}else{
+					widemode = true;
+					tileCountHorizontal = 20;
+					tileCountVertical = 40;
+				}
+
+				restart();
+			}
+
+			function restart(){
+				for(x = 0; x < fgGrid.length; x++){
+					for(y = 0; y < fgGrid[0].length; y++){
+						fgGrid[x][y] = 0;
+					}
+				}
+
+				document.getElementById("loose").innerHTML = "";
+				document.getElementById("score").innerHTML = "Ummmmmm... Okay...";
+
+				looser = false;
+
+				initialize();
+			}
+
+			function updatescore(){
+				var newScore = scores[Math.floor((Math.random()*(scores.length))+0)];
+				document.getElementById("score").innerHTML = newScore;
+			}
+
+			minHeight = 500;
+
+			function updatesize(){
+				if(window.innerHeight - 125 < minHeight){
+					canvas.height = minHeight;
+					canvas.width = canvas.height / 2;
+				}else if(autoscale){
+					canvas.height = window.innerHeight - 125;
+					canvas.width = canvas.height / 2;	
+				}
+				
+				tileWidth = canvas.width / tileCountHorizontal;
+				tileHeight = canvas.height / tileCountVertical;
+
+				redraw();
+			}
+
+			function update(){
+				octinomalY++;
+
+				//check if collided / reached base
+				if(currentOctinomal[0].length + octinomalY - 1 >= tileCountVertical){
+					placeOctinomal();
+					//return true;
+				}else{
+					for(x = 0; x < currentOctinomal.length; x++){
+						for(y = 0; y < currentOctinomal[0].length; y++){
+							if(currentOctinomal[x][y] == true){
+								if(fgGrid[x + octinomalX][y + octinomalY] > 0){
+									placeOctinomal();
+									//return true;
+								}
+							}
+						}
+					}
+				}
+
+				redraw();
+
+				//return false;
+			}
+
+			function loose(){
+				looser = true;
+				clearInterval(timer);
+				document.getElementById("loose").innerHTML = "<div style=\"padding: 10px;\"><h1 style=\"font-size: 30px;\">Wow,<br/> Looser</h1> New Hight Score: " + document.getElementById("score").innerHTML + "<br/><input style=\"padding: 10px;\" type=\"button\" name=\"button1\" id=\"nextbt\" value=\"restart\" onclick=\"restart()\"><div>";
+				document.getElementById("score").innerHTML = "HEH HEH, LOOSER...";
+				
+			}
+
+			function placeOctinomal(){
+				//no longer do the drop blocks thing
+				dropOctinomal = false;
+				clearInterval(droptimer);
+
+				updatescore();
+
+				//check for loss
+				if(octinomalY <= 0){
+					loose();
+					return;
+				}
+
+				//add the current octinomal to the fg grid
+				for(x = 0; x < currentOctinomal.length; x++){
+					for(y = 0; y < currentOctinomal[0].length; y++){
+						if(currentOctinomal[x][y] == true){
+							fgGrid[x + octinomalX][y + octinomalY - 1] = octinomalColor;
+						}
+					}
+				}
+
+				//check for lines
+				isLine = true;
+				for(y = 0; y < fgGrid[0].length; y++){
+					isLine = true;
+					for(x = 0; x < fgGrid.length; x++){
+						if(fgGrid[x][y] <= 0 || fgGrid[x][y] == false){
+							isLine = false;
+						}
+					}
+
+					if(isLine == true){
+						for(a = 0; a < fgGrid.length; a++){
+							for(b = fgGrid[0].length - 1; b > 0; b--){
+								if(b - 1 >= 0 && b <= y){
+									fgGrid[a][b] = fgGrid[a][b - 1];
+								}
+							}
+						}
+					}
+				}
+
+				//create a new octinomal
+				currentOctinomal = generateBlock();
+				octinomalX = (Math.floor(tileCountHorizontal / 2)) - (Math.floor(currentOctinomal.length / 2));
+				octinomalY = -currentOctinomal[0].length;
+				octinomalColor = Math.floor((Math.random()*360)+0);
+
+			}
+
+			function redraw(){
+				//redraw everything
+				ctx.fillStyle = "#ff00ff"
+				ctx.clearRect(0, 0, canvas.width, canvas.height);	//clear screen
+				drawGrid(0, 0, fgGrid, 100, 50)	//draw fg
+
+				if(blockshadow == true){
+					ctx.shadowBlur = 50;
+					ctx.shadowColor = "#888888";
+					drawGrid(0, 0, fgGrid, 100, 50)	//draw fg
+					drawOctinomal(octinomalX, octinomalY, currentOctinomal, octinomalColor);	//draw current octinomal
+				}
+
+				//draw without shadow
+				ctx.shadowBlur = 0;
+				drawOctinomal(octinomalX, octinomalY, currentOctinomal, octinomalColor);	//draw current octinomal
+				drawGrid(0, 0, fgGrid, 100, 50)	//draw fg
+			}
+			
+			function keyDown(e) {
+				console.log(e.keyCode);
+
+				//prevent movement when droping block
+				if(dropOctinomal == false && looser == false){
+	    			if(e.keyCode == 37) { //Left arrow
+	    				if(octinomalX > 0){
+	    					collideWithSize = false;
+	    					if (octinomalX + currentOctinomal.length < tileCountHorizontal) {
+	    						//check side for collideWithSize first
+	    						for(x = 0; x < currentOctinomal.length; x++){
+	    							for(y = 0; y < currentOctinomal[0].length; y++){
+	    								if(currentOctinomal[x][y] == true){
+	    									if(fgGrid[x + octinomalX - 1][y + octinomalY] > 0){
+	    										collideWithSize = true;
+	    									}
+	    								}
+	    							}
+	    						}
+	    					}
+	    					if(collideWithSize == false){
+	    						octinomalX--;
+	    					}
+	    				}
+	    			}
+	    			if(e.keyCode == 39) { //Right arrow
+	    				collideWithSize = false;
+	    				if (octinomalX + currentOctinomal.length < tileCountHorizontal) {
+	    					//check side for collideWithSize first
+	    					for(x = 0; x < currentOctinomal.length; x++){
+	    						for(y = 0; y < currentOctinomal[0].length; y++){
+	    							if(currentOctinomal[x][y] == true){
+	    								if(fgGrid[x + octinomalX + 1][y + octinomalY] > 0){
+	    									collideWithSize = true;
+	    								}
+	    							}
+	    						}
+	    					}
+	    					if(collideWithSize == false){
+	    						octinomalX++;
+	    					}
+	    				}
+	    			}
+	    			if(e.keyCode == 38 || e.keyCode == 16){ //up arrow / shift (for rotation)
+	    				if(e.keyCode == 38){
+	    					tmpOctinomal = rotateOctinomal(currentOctinomal, 1);
+	    				}else{
+	    					tmpOctinomal = rotateOctinomal(currentOctinomal, 0);
+	    				}
+
+	    				collided = false;
+	    				//check if it goes past / into any sides or blocks
+	    				if(tmpOctinomal.length + octinomalX > tileCountHorizontal){
+	    					collided = true;
+	    				}else{
+	    					for(x = 0; x < tmpOctinomal.length; x++){
+	    						for(y = 0; y < tmpOctinomal[0].length; y++){
+	    							if(tmpOctinomal[x][y] == true){
+
+	    								if(fgGrid[x + octinomalX][y + octinomalY] > 0){
+	    									collided = true;
+	    								}
+	    							}
+	    						}
+	    					}
+	    				}
+	    				
+
+	    				if(collided == false){
+	    					currentOctinomal = tmpOctinomal;
+	    				}
+
+	    			}
+	    			if(e.keyCode == 32){ //down arrow (place block)
+	    				dropOctinomal = true;
+
+	    				//start drop block timer
+						clearInterval(droptimer);
+	    				droptimer = setInterval(function(){
+	    					update();
+	    					update();
+	    				}, 1);
+	    			}
+	    			if(e.keyCode == 40){
+	    				octinomalY += 1;
+	    			}
+				}
+
+				if(e.keyCode == 82){
+					restart();
+				}
+
+    			if(e.keyCode == 32){
+    				update();
+    			}
+    			redraw();
+			}
+
+			function rotateOctinomal(direction){
+				newOctinomal = new Array(currentOctinomal[0].length);
+				for(x = 0; x < currentOctinomal[0].length; x++){
+					newOctinomal[x] = new Array(currentOctinomal.length)
+					for(y = 0; y < currentOctinomal.length; y++){
+						newOctinomal[x][y] = currentOctinomal[currentOctinomal.length - 1 - y][x];
+					}
+				}
+
+				if(direction == 1){
+					for(i = 0; i < 3; i++){
+						newOctinomal = rotateOctinomal(newOctinomal);
+					}
+				}
+
+				return newOctinomal;
+			}
+
+			function drawOctinomal(xoffset, yoffset, blocks, color){ 
+				for(blockx = 0; blockx < blocks.length; blockx++) {
+					for(blocky = 0; blocky < blocks[0].length; blocky++) {
+						if (blocks[blockx][blocky] >= 1) {
+							drawBlock(blockx + xoffset, blocky + yoffset, color, 100, 50);
+						}
+					}
+				}
+			}
+
+			function drawGrid(xoffset, yoffset, blocks, saturation, brightness){
+				for(blockx = 0; blockx < blocks.length; blockx++) {
+					for(blocky = 0; blocky < blocks[0].length; blocky++) {
+						if (blocks[blockx][blocky] >= 1) {
+							drawBlock(blockx + xoffset, blocky + yoffset, blocks[blockx][blocky], saturation, brightness);
+						}
+					}
+				}
+			}
+
+			function drawBlock(x, y, color, saturation,  brightness) {
+    			//Convert to pixel coordinates
+    			pixelX = x * tileWidth;
+    			pixelY = y * tileHeight;
+    			
+    			//Set the fill color for drawing commands
+    			ctx.fillStyle = "hsl(" + color + "," + saturation + "%," + brightness + "%)";
+    			 
+    			//Create a filled rectangle
+    			ctx.fillRect(pixelX - 1, pixelY - 1, tileWidth + 1, tileHeight + 1);
+			}
+		</script>
+	</head>
+	<body onload="initialize();" onkeydown="keyDown(event);">
+		<center>
+			<div id="content">
+				<div align="left" id="title"><h1>Octris</h1><h4 style="padding-left:3em"> is a bad idea<sub style="font-size: 5px;">by daniel</sub></h4></div>
+				<canvas id="gameCanvas" class="contentbox"></canvas>
+				<div id="sidepanel">
+					<div id="sidecontent" class="contentbox">
+						<div id="scoretitle">Score:</div>
+						<div id="score">Score: daniel sux</div>
+						<br/>
+						<div id="options">
+							Options:
+							<br/>
+							<input type="checkbox" name="button1" id="nextbt" value="View " onclick="toggleshadows()">shadows<br/>
+							<input type="checkbox" name="button1" id="nextbt" value="View " checked="checked" onclick="togglescale()">scale<br/>
+							<input type="checkbox" name="button1" id="nextbt" value="View " checked="checked" onclick="togglewide()">wide mode for Daniel<br/>
+							<input type="checkbox" name="button1" id="nextbt" value="View " onclick="buttonToggle(this,'View ','Hide ')">shadows!!!
+						</div>
+						<center>
+							<input type="button" name="button1" id="nextbt" value="restart" onclick="restart()">
+						</center>
+					</div>
+					<div class="contentbox" id="sidecontent">
+						Daniel, you should make the font.
+					</div>
+					<div class="contentbox" id="sidecontent">
+						and the textures
+					</div>
+					<div class="contentbox" id="sidecontent">
+						and everything else...
+					</div>
+				</div>
+
+				<div id="loose" class="contentbox">
+					<!--stuff goes here when you loose-->
+				</div>
+			</div>
+		</center>
+	</body>
+</html>
