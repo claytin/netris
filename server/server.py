@@ -2,10 +2,17 @@ from curses import wrapper
 import curses
 import math
 
+import tornado.httpserver
+import tornado.websocket
+import tornado.ioloop
+import tornado.web
 
-optionNames = ["Port", "Names", "Levels", "Sync Levels", "Speed", "Rounds", "Width", "Height", "Next", "Pause", "Sync Pause", "Loss"]
-optionStatus = [13337, True, False, False, 500, 3, 10, 20, True, True, True, "Score"]
+
+optionNames = ["Port", "Names", "Levels", "Sync Levels", "Speed", "Rounds", "Width", "Height", "Next", "Pause", "Sync Pause", "Loss", "ghost"]
+optionStatus = [13337, True, False, False, 500, 3, 10, 20, True, True, True, "score", True]
 options = [optionNames, optionStatus]
+
+connectedPlayers = ["tst", "tst2", "tst3"]
 
 buttons = ["apply", "kick", "add", "start", "pause", "restart", "end", "say"]
 
@@ -26,23 +33,32 @@ def main(stdscr):
 	#create options window
 	optionsWindow = curses.newwin(stdscr.getmaxyx()[0] - 3 - 1, 30, 0, 0)
 	optionsWindow.box(0, 0)
-	drawOptions(optionsWindow)
+	drawOptionsWindow(optionsWindow)
 	optionsWindow.refresh();
 
 	#create actions window
-	buttonsWindow = curses.newwin(3, stdscr.getmaxyx()[1], stdscr.getmaxyx()[0] - 3 - 1, 0)
-	buttonsWindow.box(0, 0)
-	drawActions(buttonsWindow)
-	buttonsWindow.refresh()
+	actionsWindow = curses.newwin(3, stdscr.getmaxyx()[1], stdscr.getmaxyx()[0] - 3 - 1, 0)
+	actionsWindow.box(0, 0)
+	drawActionsWindow(actionsWindow)
+	actionsWindow.refresh()
 
 	#create players window
+	playersWindow = curses.newwin(math.floor((stdscr.getmaxyx()[0] - 3 - 1) / 2), stdscr.getmaxyx()[1] - 30, 0, 30)
+	playersWindow.box(0, 0)
+	drawPlayersWindow(playersWindow)
+	playersWindow.refresh()
 
-	#create waiting window
-	
+	#create waiting players window
+	waitingPlayersWindow = curses.newwin(stdscr.getmaxyx()[0] - playersWindow.getmaxyx()[0] - 4, stdscr.getmaxyx()[1] - 30, playersWindow.getmaxyx()[0], playersWindow.getbegyx()[1])
+	waitingPlayersWindow.box(0, 0)
+	drawWaitingPlayersWindow(waitingPlayersWindow)
+	waitingPlayersWindow.refresh()
 
 	stdscr.move(stdscr.getmaxyx()[0] - 1, 0)
 	stdscr.clrtoeol()
 	stdscr.addstr(">");
+
+
 
 	while True:
 		key = stdscr.getkey()
@@ -55,21 +71,26 @@ def main(stdscr):
 				moveSelected(2)
 			elif key == "KEY_LEFT":
 				moveSelected(3)
-			drawOptions(optionsWindow)
+			drawOptionsWindow(optionsWindow)
 			optionsWindow.refresh()
-			drawActions(buttonsWindow)
-			buttonsWindow.refresh()
+			drawActionsWindow(actionsWindow)
+			actionsWindow.refresh()
 		elif key == "KEY_RESIZE":
 			#check if stuff will fit
-			max = stdscr.getmaxyx()
-			if max[0] >= 24 and max[1] >= 80:
-				pass
-			else:
-				stdscr.clear()
-				stdscr.addstr(math.floor(max[0] / 2), math.floor(max[1] / 2), "TO SMALL " + str(max))
-				stdscr.refresh()
+			pass
 
-def drawActions(actionsWindow):
+def drawWaitingPlayersWindow(waitingPlayersWindow):
+	waitingPlayersWindow.move(0, 2)
+	waitingPlayersWindow.addstr("Waiting", curses.color_pair(3) | curses.A_BOLD);
+	for index in range(len(connectedPlayers)):
+		waitingPlayersWindow.move(1 + index, 1)
+		waitingPlayersWindow.addstr(connectedPlayers[index] + "\t: (add  -  kick  -  ban)" + "\n")
+
+def drawPlayersWindow(playersWindow):
+	playersWindow.move(0, 2)
+	playersWindow.addstr("Players", curses.color_pair(3) | curses.A_BOLD);
+
+def drawActionsWindow(actionsWindow):
 	actionsWindow.move(0, 2)
 	actionsWindow.addstr("Actions", curses.color_pair(3) | curses.A_BOLD)
 	actionsWindow.move(1, 1)
@@ -82,7 +103,7 @@ def drawActions(actionsWindow):
 		actionsWindow.addstr("    ");
 
 
-def drawOptions(optionsWindow):
+def drawOptionsWindow(optionsWindow):
 	global selected
 
 	optionsWindow.move(0, 2);
@@ -131,5 +152,7 @@ def moveSelected(direction):	#yeah... this could be better... but eh, it works
 			selected = selected - 1
 		if direction == 0:
 			selected = 11
+
+
 
 wrapper(main)
