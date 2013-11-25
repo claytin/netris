@@ -66,7 +66,7 @@ function generateBlock() {
 					  //well dang...
 					  console.log("well dang: " + direction);
 					}
-					if (blocksAdded > 6){
+					if (blocksAdded > 4 - 1 - 1){
 						generated = true;
 					}
 				}

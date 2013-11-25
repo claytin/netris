@@ -9,14 +9,13 @@
 			//options
 			var blockshadow;
 			var autoscale = true;
-			var widemode = true;
 
 			//global variables
 			var timer;  //Game timer
 			var droptimer;
 
-			var tileCountVertical = 40;
-			var tileCountHorizontal = 20;
+			var tileCountVertical = 24;
+			var tileCountHorizontal = 10;
 			var tileWidth;
 			var tileHeight;
 
@@ -35,7 +34,7 @@
 			var looser = false;
 
 			function initialize() {
-    			/*canvas = document.getElementById("gameCanvas");
+    			canvas = document.getElementById("gameCanvas");
 				ctx = canvas.getContext("2d");
 				//canvas.width = document.body.clientWidth
 				//canvas.height = document.body.clientHeight;
@@ -54,8 +53,8 @@
 
 				//create initial octinomal
 				currentOctinomal = generateBlock();
-				octinomalX = Math.floor(currentOctinomal.length / 2);
-				octinomalY = -currentOctinomal[0].length;
+				octinomalX = (Math.floor(tileCountHorizontal / 2)) - (Math.floor(currentOctinomal.length / 2));
+				octinomalY = -1;
 				octinomalColor = Math.floor((Math.random()*360)+0)
 				dropOctinomal = false;
 
@@ -68,8 +67,8 @@
     			updatescore();
     			updatesize();
 
-    			window.onresize = function(event) {updatesize();}*/
-    			if ("WebSocket" in window)
+    			window.onresize = function(event) {updatesize();}
+    			/*if ("WebSocket" in window)
     			  {
     			     alert("WebSocket is supported by your Browser!");
     			     // Let us open a web socket
@@ -95,7 +94,7 @@
     			  {
     			     // The browser doesn't support WebSocket
     			     alert("WebSocket NOT supported in your brower... \nmuliplayer will not work");
-    			  }
+    			  }*/
 			}
 
 			function toggleshadows(){
@@ -117,20 +116,6 @@
 					autoscale = true;
 				}
 				updatesize();
-			}
-
-			function togglewide(){
-				if(widemode == true){
-					widemode = false;
-					tileCountHorizontal = 10;
-					tileCountVertical = 20;
-				}else{
-					widemode = true;
-					tileCountHorizontal = 20;
-					tileCountVertical = 40;
-				}
-
-				restart();
 			}
 
 			function restart(){
@@ -249,7 +234,7 @@
 				//create a new octinomal
 				currentOctinomal = generateBlock();
 				octinomalX = (Math.floor(tileCountHorizontal / 2)) - (Math.floor(currentOctinomal.length / 2));
-				octinomalY = -currentOctinomal[0].length;
+				octinomalY = 0;
 				octinomalColor = Math.floor((Math.random()*360)+0);
 
 			}

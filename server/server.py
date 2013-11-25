@@ -21,6 +21,7 @@ selected = 0
 def main(stdscr):
 	global selected
 
+	curses.curs_set(0)
 	stdscr.clear()
 
 	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)	#green check
@@ -58,8 +59,6 @@ def main(stdscr):
 	stdscr.clrtoeol()
 	stdscr.addstr(">");
 
-
-
 	while True:
 		key = stdscr.getkey()
 		if key == "KEY_UP" or key == "KEY_DOWN" or key == "KEY_RIGHT" or key == "KEY_LEFT":
@@ -78,6 +77,13 @@ def main(stdscr):
 		elif key == "KEY_RESIZE":
 			#check if stuff will fit
 			pass
+		elif key == "KEY_ENTER":
+			selectOption()
+			drawOptionsWindow(optionsWindow)
+			optionsWindow.refresh()
+			drawActionsWindow(actionsWindow)
+			actionsWindow.refresh()
+
 
 def drawWaitingPlayersWindow(waitingPlayersWindow):
 	waitingPlayersWindow.move(0, 2)
@@ -134,7 +140,17 @@ def drawOptionsWindow(optionsWindow):
 					optionsWindow.addstr(" ")
 			else:
 				optionsWindow.addstr(str(options[1][index]), curses.color_pair(2) | curses.A_BOLD)
-			optionsWindow.addstr(")");
+			optionsWindow.addstr(")")
+
+def selectOption():
+	global selected
+	global options
+
+	if selected == 0:
+		pass
+	elif selected == 1:
+		pass
+
 
 def moveSelected(direction):	#yeah... this could be better... but eh, it works
 	#0=up, 1=right, 2=down, 3=left
@@ -153,6 +169,8 @@ def moveSelected(direction):	#yeah... this could be better... but eh, it works
 		if direction == 0:
 			selected = 11
 
-
+class ClientHandler():
+	def run():
+		pass
 
 wrapper(main)
