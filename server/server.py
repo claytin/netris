@@ -7,6 +7,8 @@ import tornado.websocket
 import tornado.ioloop
 import tornado.web
 
+import threading
+
 
 optionNames = ["Port", "Names", "Levels", "Sync Levels", "Speed", "Rounds", "Width", "Height", "Next", "Pause", "Sync Pause", "Loss", "ghost"]
 optionStatus = [13337, True, False, False, 500, 3, 10, 20, True, True, True, "score", True]
@@ -169,8 +171,32 @@ def moveSelected(direction):	#yeah... this could be better... but eh, it works
 		if direction == 0:
 			selected = 11
 
-class ClientHandler():
-	def run():
-		pass
+#for multi threading the server
+class ClientHandler(threading.Thread):
+	def run(self):
+		tornado.ioloop.IOLoop.instance().start()
 
+class WSHandler(tornado.websocket.WebSocketHandler):
+	def open(self):
+		print("new connection")
+
+	def on_message(self, message):
+		print("message received: " + message)
+		self.write_message(u"You said: " + message)
+
+	def on_close(self):
+		print('connection closed')
+
+application = tornado.web.Application([
+	(r'/ws', WSHandler),
+])
+
+http_server = tornado.httpserver.HTTPServer(application)
+
+#http_server.listen(13337)
+#
+#serverThread = ClientHandler()
+#serverThread.start()
+
+#start everything by calling main with the curses wrapper
 wrapper(main)

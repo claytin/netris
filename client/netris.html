@@ -14,7 +14,7 @@
 			var timer;  //Game timer
 			var droptimer;
 
-			var tileCountVertical = 24;
+			var tileCountVertical = 20;
 			var tileCountHorizontal = 10;
 			var tileWidth;
 			var tileHeight;
@@ -55,7 +55,7 @@
 				currentOctinomal = generateBlock();
 				octinomalX = (Math.floor(tileCountHorizontal / 2)) - (Math.floor(currentOctinomal.length / 2));
 				octinomalY = -1;
-				octinomalColor = Math.floor((Math.random()*360)+0)
+				octinomalColor = 16328306; 
 				dropOctinomal = false;
 
 				//start game udpate timer
@@ -68,33 +68,33 @@
     			updatesize();
 
     			window.onresize = function(event) {updatesize();}
-    			/*if ("WebSocket" in window)
+    			if ("WebSocket" in window)
     			  {
-    			     alert("WebSocket is supported by your Browser!");
+    			     console.log("WebSocket is supported by your Browser!");
     			     // Let us open a web socket
     			     var ws = new WebSocket("ws://localhost:13337/ws");
     			     ws.onopen = function()
     			     {
     			        // Web Socket is connected, send data using send()
     			        ws.send("Message to send");
-    			        alert("Message is sent...");
+    			        console.log("Message is sent...");
     			     };
     			     ws.onmessage = function (evt) 
     			     { 
     			        var received_msg = evt.data;
-    			        alert("Message is received...");
+    			        console.log("Message is received...");
     			     };
     			     ws.onclose = function()
     			     { 
     			        // websocket is closed.
-    			        alert("Connection is closed..."); 
+    			        console.log("Connection is closed..."); 
     			     };
     			  }
     			  else
     			  {
     			     // The browser doesn't support WebSocket
-    			     alert("WebSocket NOT supported in your brower... \nmuliplayer will not work");
-    			  }*/
+    			     console.log("WebSocket NOT supported in your brower... \nmuliplayer will not work");
+    			  }
 			}
 
 			function toggleshadows(){
@@ -138,16 +138,16 @@
 				document.getElementById("score").innerHTML = newScore;
 			}
 
-			minHeight = 500;
+			//minHeight = 500;
 
 			function updatesize(){
-				if(window.innerHeight - 125 < minHeight){
-					canvas.height = minHeight;
-					canvas.width = canvas.height / 2;
-				}else if(autoscale){
-					canvas.height = window.innerHeight - 125;
-					canvas.width = canvas.height / 2;	
-				}
+				//if(window.innerHeight - 125 < minHeight){
+				//	canvas.height = minHeight;
+				//	canvas.width = canvas.height / 2;
+				//}else if(autoscale){
+				canvas.height = window.innerHeight - 125;
+				canvas.width = canvas.height / 2;	
+				//}
 				
 				tileWidth = canvas.width / tileCountHorizontal;
 				tileHeight = canvas.height / tileCountVertical;
@@ -235,7 +235,9 @@
 				currentOctinomal = generateBlock();
 				octinomalX = (Math.floor(tileCountHorizontal / 2)) - (Math.floor(currentOctinomal.length / 2));
 				octinomalY = 0;
-				octinomalColor = Math.floor((Math.random()*360)+0);
+				colors = [16328306, 2526162, 5685974, 16619295, 8565780, 9196798, 16706924]
+				newcolor = colors[Math.floor((Math.random()*(colors.length))+0)];
+				octinomalColor = newcolor;
 
 			}
 
@@ -378,39 +380,38 @@
 				for(blockx = 0; blockx < blocks.length; blockx++) {
 					for(blocky = 0; blocky < blocks[0].length; blocky++) {
 						if (blocks[blockx][blocky] >= 1) {
-							drawBlock(blockx + xoffset, blocky + yoffset, color, 100, 50);
+							drawBlock(blockx + xoffset, blocky + yoffset, color);
 						}
 					}
 				}
 			}
 
-			function drawGrid(xoffset, yoffset, blocks, saturation, brightness){
+			function drawGrid(xoffset, yoffset, blocks){
 				for(blockx = 0; blockx < blocks.length; blockx++) {
 					for(blocky = 0; blocky < blocks[0].length; blocky++) {
 						if (blocks[blockx][blocky] >= 1) {
-							drawBlock(blockx + xoffset, blocky + yoffset, blocks[blockx][blocky], saturation, brightness);
+							drawBlock(blockx + xoffset, blocky + yoffset, blocks[blockx][blocky]);
 						}
 					}
 				}
 			}
 
-			function drawBlock(x, y, color, saturation,  brightness) {
+			function drawBlock(x, y, color) {
     			//Convert to pixel coordinates
     			pixelX = x * tileWidth;
     			pixelY = y * tileHeight;
     			
     			//Set the fill color for drawing commands
-    			ctx.fillStyle = "hsl(" + color + "," + saturation + "%," + brightness + "%)";
+    			ctx.fillStyle = hexString = color.toString(16);;
     			 
     			//Create a filled rectangle
-    			ctx.fillRect(pixelX - 1, pixelY - 1, tileWidth + 1, tileHeight + 1);
+    			ctx.fillRect(pixelX, pixelY, tileWidth, tileHeight);
 			}
 		</script>
 	</head>
 	<body onload="initialize();" onkeydown="keyDown(event);">
 		<center>
 			<div id="content">
-				<div align="left" id="title"><h1>Octris</h1><h4 style="padding-left:3em"> is a bad idea<sub style="font-size: 5px;">by daniel</sub></h4></div>
 				<canvas id="gameCanvas" class="contentbox"></canvas>
 				<div id="sidepanel">
 					<div id="sidecontent" class="contentbox">
