@@ -16,7 +16,8 @@ options = [optionNames, optionStatus]
 
 connectedPlayers = ["tst", "tst2", "tst3"]
 
-buttons = ["apply", "kick", "add", "start", "pause", "restart", "end", "say"]
+buttons = ["apply", "kick", "add", "start", "stop", "pause", "restart", "end", "broadcast", "quit"]
+#buttonKeys = ['a', 'k', 'd', 's', 't', 'p', 'r', 'e', 'b', 'q']
 
 selected = 0
 
@@ -46,7 +47,7 @@ def main(stdscr):
 	actionsWindow.refresh()
 
 	#create players window
-	playersWindow = curses.newwin(math.floor((stdscr.getmaxyx()[0] - 3 - 1) / 2), stdscr.getmaxyx()[1] - 30, 0, 30)
+	playersWindow = curses.newwin(int(math.floor((stdscr.getmaxyx()[0] - 3 - 1) / 2)), stdscr.getmaxyx()[1] - 30, 0, 30)
 	playersWindow.box(0, 0)
 	drawPlayersWindow(playersWindow)
 	playersWindow.refresh()
@@ -62,30 +63,39 @@ def main(stdscr):
 	stdscr.addstr(">");
 
 	while True:
-		key = stdscr.getkey()
-		if key == "KEY_UP" or key == "KEY_DOWN" or key == "KEY_RIGHT" or key == "KEY_LEFT":
-			if key == "KEY_UP":
+		key = stdscr.getch()
+
+		stdscr.addstr(stdscr.getmaxyx()[0] - 1, stdscr.getmaxyx()[1] - 1 - len(str(key)), str(key) + "");
+		stdscr.refresh()
+
+		if key >= 258 and key <= 261:
+			if key == 259:
 				moveSelected(0)
-			elif key == "KEY_RIGHT":
+			elif key == 261:
 				moveSelected(1)
-			elif key == "KEY_DOWN":
+			elif key == 258:
 				moveSelected(2)
-			elif key == "KEY_LEFT":
+			elif key == 260:
 				moveSelected(3)
 			drawOptionsWindow(optionsWindow)
 			optionsWindow.refresh()
 			drawActionsWindow(actionsWindow)
 			actionsWindow.refresh()
-		elif key == "KEY_RESIZE":
+		elif key == 410:			
 			#check if stuff will fit
 			pass
-		elif key == "KEY_ENTER":
+		elif key == 10:
 			selectOption()
 			drawOptionsWindow(optionsWindow)
 			optionsWindow.refresh()
 			drawActionsWindow(actionsWindow)
 			actionsWindow.refresh()
+		elif key == 113:
+			quit()
+			return
 
+def quit():
+	pass
 
 def drawWaitingPlayersWindow(waitingPlayersWindow):
 	waitingPlayersWindow.move(0, 2)
@@ -119,10 +129,14 @@ def drawOptionsWindow(optionsWindow):
 	optionsWindow.move(1, 1);
 	for index in range(len(options[0])):
 		optionsWindow.move(index + 1, 1);
-		#if selected == index:
 		#	optionsWindow.addstr(str(index) + ") " + options[0][index], curses.A_REVERSE)
 		#else:
-		optionsWindow.addstr(str(index) + ") " + options[0][index])
+		
+		if selected == index:
+			optionsWindow.addstr(options[0][index], curses.color_pair(4) | curses.A_UNDERLINE | curses.A_BOLD)
+		else:
+			optionsWindow.addstr(options[0][index])
+
 		optionsWindow.move(index + 1, 16);
 		optionsWindow.addstr( ": (")
 		if selected == index:
@@ -148,11 +162,10 @@ def selectOption():
 	global selected
 	global options
 
-	if selected == 0:
-		pass
+	if type(options[1][selected]) == bool:
+		options[1][selected] = not options[1][selected]
 	elif selected == 1:
-		pass
-
+		options[1][selected] = not options[1][selected];
 
 def moveSelected(direction):	#yeah... this could be better... but eh, it works
 	#0=up, 1=right, 2=down, 3=left
