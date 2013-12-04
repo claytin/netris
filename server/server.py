@@ -177,6 +177,7 @@ def drawOptionsWindow(optionsWindow, enterval):
 	redraw += 1
 	optionsWindow.addstr("Options (" + str(selected) + ", " + str(enterValX) + ", " + str(enterValY) + ")", curses.color_pair(3) | curses.A_BOLD);
 
+	#its kinda eh... but it works
 	if enterval:
 		newval = ""
 		optionsWindow.refresh()
@@ -199,7 +200,7 @@ def drawOptionsWindow(optionsWindow, enterval):
 			optionsWindow.addstr("(" + newval)
 			optionsWindow.refresh()
 		if type(options[1][selected]) == int:
-			options[1][selected] = int(newval)
+			options[1][selected] = int(newval) 
 		else:
 			options[1][selected] = newval
 
