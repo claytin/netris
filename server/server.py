@@ -21,8 +21,12 @@ buttons = ["apply", "kick", "add", "start", "stop", "pause", "restart", "end", "
 
 selected = 0
 
+#windows
+global optionsWindow
+
 def main(stdscr):
 	global selected
+	global optionsWindow
 
 	curses.curs_set(0)
 	stdscr.clear()
@@ -31,13 +35,14 @@ def main(stdscr):
 	curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)	#red other data
 	curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_BLACK)	#blue title
 	curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)	#yellow selected
+	curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_BLACK)	#background greyed out stuff (remember to bold)
 
 	stdscr.refresh()
 
 	#create options window
 	optionsWindow = curses.newwin(stdscr.getmaxyx()[0] - 3 - 1, 30, 0, 0)
 	optionsWindow.box(0, 0)
-	drawOptionsWindow(optionsWindow)
+	drawOptionsWindow(optionsWindow, False)
 	optionsWindow.refresh();
 
 	#create actions window
@@ -77,7 +82,7 @@ def main(stdscr):
 				moveSelected(2)
 			elif key == 260:
 				moveSelected(3)
-			drawOptionsWindow(optionsWindow)
+			drawOptionsWindow(optionsWindow, False)
 			optionsWindow.refresh()
 			drawActionsWindow(actionsWindow)
 			actionsWindow.refresh()
@@ -86,7 +91,7 @@ def main(stdscr):
 			pass
 		elif key == 10:
 			selectOption()
-			drawOptionsWindow(optionsWindow)
+			drawOptionsWindow(optionsWindow, False)
 			optionsWindow.refresh()
 			drawActionsWindow(actionsWindow)
 			actionsWindow.refresh()
@@ -120,12 +125,16 @@ def drawActionsWindow(actionsWindow):
 
 		actionsWindow.addstr("    ");
 
-
-def drawOptionsWindow(optionsWindow):
+redraw = 0
+def drawOptionsWindow(optionsWindow, enterval):
 	global selected
+	global redraw
 
-	optionsWindow.move(0, 2);
-	optionsWindow.addstr("Options (" + str(selected) + ")", curses.color_pair(3) | curses.A_BOLD);
+	enterValX = 0
+	enterValY = 0
+
+	optionsWindow.clear()
+
 	optionsWindow.move(1, 1);
 	for index in range(len(options[0])):
 		optionsWindow.move(index + 1, 1);
@@ -139,14 +148,19 @@ def drawOptionsWindow(optionsWindow):
 
 		optionsWindow.move(index + 1, 16);
 		optionsWindow.addstr( ": (")
-		if selected == index:
+		if selected == index:	
 			if type(options[1][index]) is bool:
 				if options[1][index]:
 					optionsWindow.addstr("*", curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE)
 				elif not options[1][index]:
 					optionsWindow.addstr("-", curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE)
 			else:
-				optionsWindow.addstr(str(options[1][index]), curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE)
+				if enterval:
+					enterValX = optionsWindow.getyx()[1]
+					enterValY = optionsWindow.getyx()[0]
+					optionsWindow.addstr(str(options[1][index]), curses.color_pair(5) | curses.A_BOLD)
+				else:
+					optionsWindow.addstr(str(options[1][index]), curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE)
 			optionsWindow.addstr(")");
 		else:
 			if type(options[1][index]) is bool:
@@ -158,14 +172,47 @@ def drawOptionsWindow(optionsWindow):
 				optionsWindow.addstr(str(options[1][index]), curses.color_pair(2) | curses.A_BOLD)
 			optionsWindow.addstr(")")
 
+	optionsWindow.box(0, 0)
+	optionsWindow.move(0, 2);
+	redraw += 1
+	optionsWindow.addstr("Options (" + str(selected) + ", " + str(enterValX) + ", " + str(enterValY) + ")", curses.color_pair(3) | curses.A_BOLD);
+
+	if enterval:
+		newval = ""
+		optionsWindow.refresh()
+		curses.curs_set(1)
+		optionsWindow.move(enterValY, enterValX)
+		while True:
+			key = optionsWindow.getch()
+			if key == 10:
+				break
+			elif key == 127:
+				newval = newval[:-1]
+				optionsWindow.addch(optionsWindow.getyx()[0], optionsWindow.getyx()[1] - 1, ' ')
+			elif optionsWindow.getyx()[1] < optionsWindow.getmaxyx()[1] - 2 and (key >= 32 and key <= 126):
+				if type(options[1][selected]) == int:
+					if key >= 48 and key <= 57:
+						newval = newval + str(unichr(key))
+				else:
+					newval = newval + str(unichr(key))
+			optionsWindow.move(enterValY, enterValX - 1)
+			optionsWindow.addstr("(" + newval)
+			optionsWindow.refresh()
+		if type(options[1][selected]) == int:
+			options[1][selected] = int(newval)
+		else:
+			options[1][selected] = newval
+
 def selectOption():
 	global selected
 	global options
 
 	if type(options[1][selected]) == bool:
 		options[1][selected] = not options[1][selected]
-	elif selected == 1:
-		options[1][selected] = not options[1][selected];
+	elif type(options[1][selected]) == int or type(options[1][selected]) == str:
+		global optionsWindow
+		drawOptionsWindow(optionsWindow, True)
+		
 
 def moveSelected(direction):	#yeah... this could be better... but eh, it works
 	#0=up, 1=right, 2=down, 3=left
