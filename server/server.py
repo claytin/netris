@@ -58,10 +58,17 @@ def main(stdscr):
 	playersWindow.refresh()
 
 	#create waiting players window
-	waitingPlayersWindow = curses.newwin(stdscr.getmaxyx()[0] - playersWindow.getmaxyx()[0] - 4, stdscr.getmaxyx()[1] - 30, playersWindow.getmaxyx()[0], playersWindow.getbegyx()[1])
+	waitingPlayersWindow = curses.newwin(stdscr.getmaxyx()[0] - playersWindow.getmaxyx()[0] - 4, 43,
+		playersWindow.getmaxyx()[0], playersWindow.getbegyx()[1])
 	waitingPlayersWindow.box(0, 0)
 	drawWaitingPlayersWindow(waitingPlayersWindow)
 	waitingPlayersWindow.refresh()
+
+	#create output window
+	outputWindow = curses.newwin(stdscr.getmaxyx()[0] - playersWindow.getmaxyx()[0] - 4, stdscr.getmaxyx()[1] - waitingPlayersWindow.getmaxyx()[1] - 30,
+		playersWindow.getmaxyx()[0], playersWindow.getbegyx()[1] + 43)
+	drawOutput(outputWindow)
+	outputWindow.refresh()
 
 	stdscr.move(stdscr.getmaxyx()[0] - 1, 0)
 	stdscr.clrtoeol()
@@ -102,28 +109,37 @@ def main(stdscr):
 def quit():
 	pass
 
+def drawOutput(outputWindow, outputString = ""):
+	outputWindow.box(0, 0)
+	outputWindow.move(0, 2)
+	outputWindow.addstr("Output", curses.color_pair(3) | curses.A_BOLD)
+
 def drawWaitingPlayersWindow(waitingPlayersWindow):
-	waitingPlayersWindow.move(0, 2)
-	waitingPlayersWindow.addstr("Waiting", curses.color_pair(3) | curses.A_BOLD);
 	for index in range(len(connectedPlayers)):
 		waitingPlayersWindow.move(1 + index, 1)
-		waitingPlayersWindow.addstr(connectedPlayers[index] + "\t: (add  -  kick  -  ban)" + "\n")
+		waitingPlayersWindow.addstr(connectedPlayers[index] + "\t(add/kick)" + "\n")
+
+	waitingPlayersWindow.box(0, 0)
+	waitingPlayersWindow.move(0, 2)
+	waitingPlayersWindow.addstr("Waiting", curses.color_pair(3) | curses.A_BOLD);
 
 def drawPlayersWindow(playersWindow):
 	playersWindow.move(0, 2)
-	playersWindow.addstr("Players", curses.color_pair(3) | curses.A_BOLD);
+	playersWindow.addstr("Game", curses.color_pair(3) | curses.A_BOLD);
 
 def drawActionsWindow(actionsWindow):
-	actionsWindow.move(0, 2)
-	actionsWindow.addstr("Actions", curses.color_pair(3) | curses.A_BOLD)
 	actionsWindow.move(1, 1)
 	for index in range(len(buttons)):
-		if index + 12 == selected:
+		if index + len(options[0]) == selected:
 			actionsWindow.addstr(buttons[index], curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE)
 		else:
 			actionsWindow.addstr(buttons[index])
 
 		actionsWindow.addstr("    ");
+
+	actionsWindow.box(0, 0)
+	actionsWindow.move(0, 2)
+	actionsWindow.addstr("Actions", curses.color_pair(3) | curses.A_BOLD)
 
 redraw = 0
 def drawOptionsWindow(optionsWindow, enterval):
@@ -199,6 +215,9 @@ def drawOptionsWindow(optionsWindow, enterval):
 			optionsWindow.move(enterValY, enterValX - 1)
 			optionsWindow.addstr("(" + newval)
 			optionsWindow.refresh()
+		if newval == "":
+			return
+
 		if type(options[1][selected]) == int:
 			options[1][selected] = int(newval) 
 		else:
@@ -208,29 +227,30 @@ def selectOption():
 	global selected
 	global options
 
-	if type(options[1][selected]) == bool:
-		options[1][selected] = not options[1][selected]
-	elif type(options[1][selected]) == int or type(options[1][selected]) == str:
-		global optionsWindow
-		drawOptionsWindow(optionsWindow, True)
+	if selected < len(options[0]):
+		if type(options[1][selected]) == bool:
+			options[1][selected] = not options[1][selected]
+		elif type(options[1][selected]) == int or type(options[1][selected]) == str:
+			global optionsWindow
+			drawOptionsWindow(optionsWindow, True)
 		
 
 def moveSelected(direction):	#yeah... this could be better... but eh, it works
 	#0=up, 1=right, 2=down, 3=left
 	global selected
 
-	if selected <= 11:
+	if selected <= len(options[0]) - 1:
 		if direction == 0 and selected >= 1:
 			selected = selected - 1
-		elif direction == 2 and selected <= 11:
+		elif direction == 2 and selected <= len(options[0]):
 			selected = selected + 1
-	elif selected > 11:
-		if direction == 1 and selected < 12 + 7:
+	elif selected > len(options[0]) - 1:
+		if (direction == 1 or direction == 2) and selected < len(options[0]) + len(buttons) - 1:
 			selected = selected + 1
-		if direction == 3 and selected > 12:
+		if direction == 3 and selected > len(options[0]):
 			selected = selected - 1
 		if direction == 0:
-			selected = 11
+			selected = len(options[0]) - 1
 
 #for multi threading the server
 class ClientHandler(threading.Thread):
